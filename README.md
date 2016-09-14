@@ -22,7 +22,10 @@ The remote host must have PHP 5.6 installed from the [ppa:ondrej/php](https://la
      - ```- hosts: [project1-group]```
      - ```- hosts: project1-dev```
 
-3. Run: ```ansible-playbook -i hosts oracle-php.yml --ask-pass --ask-become-pass```
+5. Run:
+    * ```ansible-playbook -i hosts oracle-php.yml --ask-pass --become --ask-become-pass```  
+    or
+    * ```ansible-playbook -i hosts oracle-php.yml -k -b -K```
 
 ## License
 
