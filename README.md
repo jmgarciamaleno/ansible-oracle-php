@@ -1,16 +1,17 @@
 # Ansible Oracle connection from PHP role
 
-Simple and specific Ansible role to configure Oracle 11.2 access from PHP 5.6 in Ubuntu 14.04.
+Simple and specific Ansible role to configure access to an Oracle 11.2 access from PHP 5.6 in Ubuntu 14.04.
 
 This role is based on the instructions from [The ************* way to get Oracle database connections in PHP5 over Ubuntu](https://github.com/tassoevan/pdo-oci-extension), with a couple changes.
 
-The PHP extensions ```oci8``` and ```pdo_oci``` will be enabled in the PHP-FPM configuration.
+The PHP extensions ```oci8``` and ```pdo_oci``` will be enabled in the PHP configuration.
 
-Oracle's sqlplus client is also installed. Connection string: ```sqlplus <USER>/<PASS>@<HOST>/<SERVICE>```
+Oracle's sqlplus client will be installed. Usage: ```sqlplus <USER>/<PASS>@<HOST>/<SERVICE>```
 
 ## Prerequisites
 
-The remote host must have PHP 5.6 installed from the [ppa:ondrej/php](https://launchpad.net/~ondrej/+archive/ubuntu/php) official repository.
+- Ubuntu 14.04
+- PHP 5.6 installed from the [ppa:ondrej/php](https://launchpad.net/~ondrej/+archive/ubuntu/php) repository
 
 ## Usage
 
