@@ -1,0 +1,32 @@
+---
+# Vars.
+- include_vars: vars.yml
+
+# Check tasks.
+- name: Check if Oracle instant client is already installed.
+  shell: if grep -q '/opt/oracle/instantclient' /etc/ld.so.conf; then echo "true"; else echo "false"; fi
+  args:
+    executable: /bin/bash
+  register: oracle_instantclient_installed
+
+- name: Check if the PHP oci8 extension is already enabled.
+  shell: php -m | if grep -q oci8; then echo "true"; else echo "false"; fi
+  args:
+    executable: /bin/bash
+  register: php_oci8_enabled
+
+- name: Check if the PHP PDO_OCI extension is already enabled.
+  shell: php -m | if grep -iq pdo_oci; then echo "true"; else echo "false"; fi
+  args:
+    executable: /bin/bash
+  register: php_pdo_oci_enabled
+
+# Main tasks.
+- include: install-oracle-client.yml
+  when: oracle_instantclient_installed.stdout == 'false'
+
+- include: install-php-oci8.yml
+  when: php_oci8_enabled.stdout == 'false'
+
+- include: install-php-pdo-oci.yml
+  when:  php_pdo_oci_enabled.stdout == 'false'

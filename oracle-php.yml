@@ -1,0 +1,6 @@
+# Ansible - Oracle connection from PHP playbook.
+---
+- hosts: ocp-dev-local
+
+  roles:
+    - common

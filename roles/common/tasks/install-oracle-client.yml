@@ -1,0 +1,62 @@
+---
+- name: Create the /opt/oracle directory.
+  file:
+    path: /opt/oracle
+    state: directory
+    mode: 0755
+
+- name: Copy and unzip oracle instantclient files.
+  unarchive:
+    src: "{{ item }}"
+    dest: /opt/oracle
+    creates: /opt/oracle/instantclient
+  with_items:
+    - instantclient-basic-linux.x64-11.2.0.4.0.zip
+    - instantclient-sdk-linux.x64-11.2.0.4.0.zip
+    - instantclient-sqlplus-linux.x64-11.2.0.4.0.zip
+
+- name: Check if /opt/oracle/instantclient already exists.
+  stat:
+    path: /opt/oracle/instantclient
+  register: instantclient_dir
+
+- name: Rename the instantclient directory.
+  command: mv /opt/oracle/instantclient_11_2 /opt/oracle/instantclient
+  when: instantclient_dir.stat.exists == false
+
+- name: Create libclntsh.so link needed for compilation.
+  file:
+    src: /opt/oracle/instantclient/libclntsh.so.11.1
+    dest: /opt/oracle/instantclient/libclntsh.so
+    state: link
+
+- name: Create libocci.so link needed for compilation.
+  file:
+    src: /opt/oracle/instantclient/libocci.so.11.1
+    dest: /opt/oracle/instantclient/libocci.so
+    state: link
+
+- name: Add instantclient to ldconfig.
+  lineinfile:
+    dest: /etc/ld.so.conf
+    regexp: '^/opt/oracle/instantclient'
+    line: '/opt/oracle/instantclient'
+    state: present
+
+- name: Add LD_LIBRARY_PATH to /etc/environment.
+  lineinfile:
+    dest: /etc/environment
+    regexp: '^LD_LIBRARY_PATH'
+    line: 'LD_LIBRARY_PATH="/opt/oracle/instantclient"'
+    state: present
+
+- name: Add /opt/oracle/instantclient to $PATH.
+  lineinfile:
+    dest: /etc/environment
+    regexp: '^PATH="([^"]*)"$'
+    line: 'PATH="/opt/oracle/instantclient:\1"'
+    backrefs: yes
+    state: present
+
+- name: Update ldconfig.
+  command: ldconfig

@@ -1,0 +1,30 @@
+---
+- name: Install packages.
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - php5.6
+    - php5.6-cli
+    - php5.6-dev
+    - php5.6-xml
+    - php-db
+    - php-pear
+    - build-essential
+    - libaio1
+
+- name: Install pecl oci8.
+  shell: echo "instantclient,/opt/oracle/instantclient" | pecl install oci8-2.0.11
+  ignore_errors: yes
+
+- name: Create the PHP oci8 mod file.
+  lineinfile:
+    dest: /etc/php/5.6/mods-available/oci8.ini
+    regexp: 'extension=oci8.so'
+    line: 'extension=oci8.so'
+    state: present
+    create: yes
+
+- name: Enable the PHP oci8 mod.
+  command: phpenmod oci8
+  notify: Restart php-fpm.

@@ -1,0 +1,90 @@
+---
+- name: Symlinks for PHP includes compatibility.
+  shell: cd /usr/include/php && for i in `ls 20*`; do ln -s 20*/$i; done
+  args:
+    executable: /bin/bash
+  ignore_errors: yes
+
+- name: Create /opt/oracle/instantclient/include/oracle/11.1 directory.
+  file:
+    path: /opt/oracle/instantclient/include/oracle/11.1
+    state: directory
+    mode: 0755
+
+- name: Symlink from /opt/oracle/instantclient/include/oracle/11.1/client to /opt/oracle/instantclient/sdk/include.
+  file:
+    src: /opt/oracle/instantclient/sdk/include
+    dest: /opt/oracle/instantclient/include/oracle/11.1/client
+    state: link
+
+- name: Create /opt/oracle/instantclient/lib/oracle/11.1/client directory.
+  file:
+    path: /opt/oracle/instantclient/lib/oracle/11.1/client
+    state: directory
+    mode: 0755
+
+- name: Symlink from /opt/oracle/instantclient/lib/oracle/11.1/client/lib to /opt/oracle/instantclient.
+  file:
+    src: /opt/oracle/instantclient
+    dest: /opt/oracle/instantclient/lib/oracle/11.1/client/lib
+    state: link
+
+- name: Update the PEAR channel.
+  command: pecl channel-update pear.php.net
+
+- name: Create a tmp PEAR download directory.
+  file:
+    path: /tmp/pear/download
+    state: directory
+    mode: 0755
+
+- name: Download the pdo_oci package.
+  shell: cd /tmp/pear/download && pecl download pdo_oci
+  args:
+    executable: /bin/bash
+
+- name: Unzip the pdo_oci packages.
+  shell: cd /tmp/pear/download && tar xvf PDO_OCI*.tgz
+  args:
+    executable: /bin/bash
+
+- name: Copy the patch file.
+  copy:
+    src: config.m4.patch
+    dest: /tmp/pear/download/PDO_OCI-1.0/config.m4.patch
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Patch file.
+  shell: cd /tmp/pear/download/PDO_OCI* && patch --dry-run -i config.m4.patch && patch -i config.m4.patch && phpize5.6
+  args:
+    executable: /bin/bash
+
+- name: Replace function_entry with zend_function_entry in pdo_oci.c.
+  replace:
+    dest: /tmp/pear/download/PDO_OCI-1.0/pdo_oci.c
+    regexp: 'function_entry'
+    replace: 'zend_function_entry'
+
+- name: Configure.
+  shell: cd /tmp/pear/download/PDO_OCI-1.0 && ORACLE_HOME=/opt/oracle/instantclient ./configure --with-pdo-oci=instantclient,/opt/oracle/instantclient,11.1
+  args:
+    executable: /bin/bash
+
+- name: Compile and install.
+  shell: cd /tmp/pear/download/PDO_OCI-1.0 && make && make test && make install
+  args:
+    executable: /bin/bash
+
+- name: Create the PHP pdo_oci mod file.
+  lineinfile:
+    dest: /etc/php/5.6/mods-available/pdo_oci.ini
+    regexp: 'extension=pdo_oci.so'
+    line: 'extension=pdo_oci.so'
+    state: present
+    create: yes
+
+- name: Enable the PHP pdo_oci mod.
+  command: phpenmod pdo_oci
+  notify: Restart php-fpm.
